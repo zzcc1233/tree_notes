@@ -1,0 +1,37 @@
+name: 编译 Android APK
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 拉取代码
+        uses: actions/checkout@v4
+
+      - name: 安装 Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.0'
+          channel: 'stable'
+
+      - name: 生成 Android 原生工程目录（补全 android/ 文件夹）
+        run: flutter create --platforms=android --org com.example.treenotes .
+
+      - name: 安装依赖
+        run: flutter pub get
+
+      - name: 生成 Isar 数据库代码 (node.g.dart)
+        run: flutter pub run build_runner build --delete-conflicting-outputs
+
+      - name: 编译 APK
+        run: flutter build apk --release
+
+      - name: 上传 APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: tree-notes-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
